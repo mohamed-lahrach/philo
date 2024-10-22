@@ -9,7 +9,7 @@
 #include <sys/time.h> // gettimeofday
 #include <stdbool.h>  // bool
 #include <limits.h>   // INT_MAX
-
+#include <errno.h>    // errno
 
 /*
 ** ANSI Escape Sequences for Bold Text Colors
@@ -18,14 +18,28 @@
 ** printf(B "This is blue text." RST);
 ** Remember to use RST to reset the color after setting it.*/
 
-# define RST "\033[0m" //Reset to default color 
-# define RED "\033[1;31m" /* Bold Red */
-# define G "\033[1;32m" /* Bold Green */
-# define Y "\033[1;33m" /* Bold Yellow */
-# define B "\033[1;34m" /* Bold Blue */
-#define M "\033[1;35m" /* Bold Magenta */
-# define C "\033[1;36m" /* Bold Cyan */
-# define W "\033[1;37m" /* Bold White */
+#define RST "\033[0m"    // Reset to default color
+#define RED "\033[1;31m" /* Bold Red */
+#define G "\033[1;32m"   /* Bold Green */
+#define Y "\033[1;33m"   /* Bold Yellow */
+#define B "\033[1;34m"   /* Bold Blue */
+#define M "\033[1;35m"   /* Bold Magenta */
+#define C "\033[1;36m"   /* Bold Cyan */
+#define W "\033[1;37m"   /* Bold White */
+
+/*
+ * OPCODE for mutex | thread functions
+ */
+typedef enum e_opcode
+{
+    LOCK,
+    UNLOCK,
+    INIT,
+    DESTROY,
+    CREATE,
+    JOIN,
+    DETACH,
+} t_opcode;
 
 typedef pthread_mutex_t t_mtx;
 typedef struct s_table t_table;
@@ -46,8 +60,8 @@ typedef struct s_philo
     long meals_counter;
     bool full;
     long last_meal_time;
-    t_mtx *left_fork;
-    t_mtx *right_fork;
+    t_mtx *first_fork;
+    t_mtx *second_fork;
     pthread_t thread_id;
     t_table *table;
 
@@ -71,5 +85,14 @@ struct s_table
 void error_exit(const char *error);
 // parsing
 void parse_input(t_table *table, char **av);
+// safe functions
+void *safe_malloc(size_t bytes);
+static void handle_mutex_error(int status, t_opcode opcode);
+void safe_mutex_handle(pthread_mutex_t *mutex, t_opcode opcode);
+static void handle_thread_error(int status, t_opcode opcode);
+void safe_thread_handle(pthread_t *thread, void *(*foo)(void *), void *data, t_opcode opcode);
+void error_exit(const char *message);
+// init
+void data_init(t_table *table);
 
 #endif // PHILO_H

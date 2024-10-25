@@ -13,7 +13,7 @@ int main(int argc, char **argv)
         parse_input(&table, argv);
 
         // 2) initialize the table
-        //init_table(&table);
+        data_init(&table);
 
         // 3) dinner starts
         //dinner_start(&table);

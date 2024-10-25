@@ -40,7 +40,15 @@ typedef enum e_opcode
     JOIN,
     DETACH,
 } t_opcode;
-
+/*
+* CODES for gettime
+*/
+typedef enum e_time_code
+{
+    SECOND,
+    MILLISECOND,
+    MICROSECOND,
+} t_time_code;
 typedef pthread_mutex_t t_mtx;
 typedef struct s_table t_table;
 
@@ -76,12 +84,15 @@ struct s_table
     long time_to_sleep;
     long nbr_limit_meals;
     long start_simulation;
-    long end_simulation; // triggers philo die or all philos are full
+    bool end_simulation; // triggers philo die or all philos are full
+    bool all_theads_ready;
+    t_mtx table_mutex;
     t_fork *forks;
     t_philo *philos;
 };
 
 // utils
+long get_time(t_time_code time_code)
 void error_exit(const char *error);
 // parsing
 void parse_input(t_table *table, char **av);
@@ -94,5 +105,17 @@ void safe_thread_handle(pthread_t *thread, void *(*foo)(void *), void *data, t_o
 void error_exit(const char *message);
 // init
 void data_init(t_table *table);
+
+// getters and setters 
+void set_bool(t_mtx *mutex, bool *dest, bool value);
+bool get_bool(t_mtx *mutex, bool *src);
+void set_long(t_mtx *mutex, long *dest, long value);
+long get_long(t_mtx *mutex, long *src);
+bool simulation_finished(t_table *table);
+
+// synchro utils
+void wait_all_threads(t_table *table)
+
+
 
 #endif // PHILO_H

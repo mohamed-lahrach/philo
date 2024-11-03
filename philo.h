@@ -26,6 +26,7 @@
 #define M "\033[1;35m"   /* Bold Magenta */
 #define C "\033[1;36m"   /* Bold Cyan */
 #define W "\033[1;37m"   /* Bold White */
+#define DEBUG_MODE 0
 
 /*
  * OPCODE for mutex | thread functions
@@ -41,16 +42,28 @@ typedef enum e_opcode
     DETACH,
 } t_opcode;
 /*
-* CODES for gettime
-*/
+ * CODES for gettime
+ */
 typedef enum e_time_code
 {
     SECOND,
     MILLISECOND,
     MICROSECOND,
 } t_time_code;
+
+typedef enum e_status
+{
+    EATING,
+    SLEEPING,
+    THINKING,
+    TAKE_FIRST_FORK,
+    TAKE_SECOND_FORK,
+    DIED,
+} t_philo_status;
+
 typedef pthread_mutex_t t_mtx;
 typedef struct s_table t_table;
+
 
 // fork struct
 typedef struct s_fork
@@ -68,8 +81,9 @@ typedef struct s_philo
     long meals_counter;
     bool full;
     long last_meal_time;
-    t_mtx *first_fork;
-    t_mtx *second_fork;
+    t_fork *first_fork;
+    t_fork *second_fork;
+    t_mtx philo_mutex; 
     pthread_t thread_id;
     t_table *table;
 
@@ -86,27 +100,30 @@ struct s_table
     long start_simulation;
     bool end_simulation; // triggers philo die or all philos are full
     bool all_theads_ready;
-    t_mtx table_mutex;
+    t_mtx table_mutex; // avoid races while reading from the table
+    t_mtx write_lock;
     t_fork *forks;
     t_philo *philos;
 };
 
 // utils
-long get_time(t_time_code time_code)
+long get_time(t_time_code time_code);
 void error_exit(const char *error);
+long get_elapsed_time_microseconds(struct timeval start, struct timeval end);
+void precise_usleep(long usec);
 // parsing
 void parse_input(t_table *table, char **av);
 // safe functions
 void *safe_malloc(size_t bytes);
-static void handle_mutex_error(int status, t_opcode opcode);
+// static void handle_mutex_error(int status, t_opcode opcode);
 void safe_mutex_handle(pthread_mutex_t *mutex, t_opcode opcode);
-static void handle_thread_error(int status, t_opcode opcode);
+// static void handle_thread_error(int status, t_opcode opcode);
 void safe_thread_handle(pthread_t *thread, void *(*foo)(void *), void *data, t_opcode opcode);
 void error_exit(const char *message);
 // init
 void data_init(t_table *table);
 
-// getters and setters 
+// getters and setters
 void set_bool(t_mtx *mutex, bool *dest, bool value);
 bool get_bool(t_mtx *mutex, bool *src);
 void set_long(t_mtx *mutex, long *dest, long value);
@@ -114,8 +131,13 @@ long get_long(t_mtx *mutex, long *src);
 bool simulation_finished(t_table *table);
 
 // synchro utils
-void wait_all_threads(t_table *table)
+void wait_all_threads(t_table *table);
 
+// dining
+void dinner_start(t_table *table);
+void *dinner_simulation(void *data);
 
+// write
+void write_status(t_philo_status status, t_philo *philo, bool debug);
 
 #endif // PHILO_H

@@ -16,7 +16,7 @@ int main(int argc, char **argv)
         data_init(&table);
 
         // 3) dinner starts
-        //dinner_start(&table);
+        dinner_start(&table);
 
         // 4) no leaks | philos full | a philo dead
         //clean(&table);
